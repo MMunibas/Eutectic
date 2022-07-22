@@ -1,0 +1,160 @@
+* Based in input of Maryam and Luis
+* Heating and Equilibrium Run
+*
+
+bomlev -1
+prnlev 5
+wrnlev 1
+
+! Read topology and parameter files
+stream toppar.str
+
+! Read PSF
+open read unit 10 card name step1_pdbreader.psf
+read psf  unit 10 card xplor
+
+!Read Coordinate
+open read unit 10 card name step1_pdbreader.crd
+read coor unit 10 card
+
+!Read MTPL
+OPEN UNIT 40 CARD READ NAME ion_scn.lpun
+MTPL MTPUNIT 40
+CLOSE UNIT 40
+
+!Morse Parameter
+set c 0
+calc i @c+IND
+label morse_loop
+  set in @i
+  calc ic @i+1
+  calc is @i+2
+  xtbd repl mors 373.811 1.21706 1.61348 sele bynu @in .or. bynu @ic end ! for CN bond
+  xtbd repl mors 124.36  1.66867 1.69773 sele bynu @ic .or. bynu @is end ! for SC bond
+  increase i by 3
+  increase c by 1
+if c lt NMX goto morse_loop
+
+open read unit 10 card name crystal_image.str
+calc boxx = 30.
+crystal defi cubic @boxx @boxx @boxx 90. 90. 90.
+crystal build nope 0
+image byres xcen 0.0 ycen 0.0 zcen 0.0 sele all end
+
+nbonds atom ewald pmewald kappa 0.43  -
+  fftx 32 ffty 32 fftz 32 order 4 -
+  cutnb 14.0  ctofnb 12.0 ctonnb 10.0 -
+  lrc vdw vswitch -
+  inbfrq -1 imgfrq -1
+
+shake bonh para sele all end
+
+set mini 0
+if @mini .eq. 0 then
+
+mini sd nstep 2000 nprint 100
+
+open write unit 10 card name mini.pdb
+write coor unit 10 pdb
+
+endif
+
+scalar mass stat
+calc pmass = int ( ?stot  /  50.0 )
+calc tmass = @pmass * 10
+
+calc tmin = XXX - 200.0
+
+set heat 0
+if @heat .eq. 0 then
+
+open write unit 31 card name heat.res       ! Restart file
+open write unit 32 file name heat.dcd       ! Coordinates file
+
+dyna leap verlet start -
+   timestp 0.001 nstep TTT1 -
+   firstt @tmin finalt XXX tbath XXX -
+   ihtfrq 1000 teminc 5 ieqfrq 0 -
+   iasors 1 iasvel 1 iscvel 0 ichecw 0 -
+   nprint 1000 nsavc 1000 ntrfrq 200 -
+   iseed  RRRHH1 RRRHH2 RRRHH3 RRRHH4 -
+   echeck 100.0   -
+   iunrea -1 iunwri 31 iuncrd 32 iunvel -1
+
+open unit 1 write card name prepare.crd
+write coor card unit 1
+close unit 1
+
+open write unit 10 card name prepare.pdb
+write coor unit 10 pdb
+
+endif
+
+set equi 0
+if @equi .eq. 0 then
+
+open read  unit 30 card name heat.res      ! Restart file
+open write unit 31 card name equi.res      ! Restart file
+open write unit 32 file name equi.dcd      ! Coordinates file
+
+dyna restart leap cpt nstep TTT2 timestp 0.001 -
+  nprint 1000 nsavc 1000 ntrfrq 200 -
+  iprfrq 500 inbfrq 10 imgfrq 50 ixtfrq 1000 -
+  ihtfrq 0 ieqfrq 0 echeck -1 -
+  iseed  RRHHH1 RRHHH2 RRHHH3 RRHHH4 -
+  pint pconst pref 1 pgamma 5 pmass @pmass -
+  hoover reft XXX tmass @tmass firstt XXX -
+  iunrea 30 iunwri 31 iuncrd 32 iunvel -1
+
+
+open unit 1 write card name equi.crd
+write coor card unit 1
+close unit 1
+
+open write unit 10 card name equi.pdb
+write coor unit 10 pdb
+
+close unit 30
+close unit 31
+close unit 32
+
+endif
+
+set n 0
+label loop
+
+if @n .eq. 0 then
+  set m @n
+  open read unit 33 card name equi.res     ! Restart file
+  open write unit 34 card name dyna.@n.res ! Restart file
+  open write unit 35 file name dyna.@n.dcd ! Coordinates file
+else
+  calc m @n-1
+  open read unit 33 card name dyna.@m.res
+  open write unit 34 card name dyna.@n.res
+  open write unit 35 file name dyna.@n.dcd
+endif
+
+dyna restart leap res nstep TTT3 timestp SSS -
+  nprint 100 nsavc NSV ntrfrq 200 -
+  iprfrq 1000 inbfrq -1 imgfrq 50 ixtfrq 1000 -
+  ihtfrq 0 ieqfrq 0 -
+  cpt pint pconst pref 1 pgamma 0 pmass @pmass -
+  hoover reft XXX tmass @tmass -
+  IUNREA 33 IUNWRI 34 IUNCRD 35 IUNVEL -1
+  
+open unit 1 write card name dyna.@n.crd
+write coor card unit 1
+close unit 1
+
+open write unit 10 card name dyna.@n.pdb
+write coor unit 10 pdb
+
+close unit 33
+close unit 34
+close unit 35
+
+increase n by 1
+if n lt NNN goto loop
+
+STOP

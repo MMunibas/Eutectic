@@ -1,0 +1,88 @@
+* Topology and Parameter Stream File for KSCN bond and not bonded 
+* Author: LIVS
+*
+!updated 2016/2, allow for use of AUTOGENERATE ANGLE DIHEDRAl PATCH
+
+!Parent files that have to be read prior to streaming this file
+!top_all36_prot.rtf
+!par_all36_prot.prm
+
+!Testcase
+!test_all36_prot_heme.inp
+
+read rtf card append
+* Topology for KSCN bond and non-bond
+*
+31  1
+
+MASS 800  POT   39.102000    ! k Potassium Ion! check masses
+MASS 801 CKSCN  12.01100     ! C for cyano group
+MASS 802 NKSCN  14.00700     ! N for cyano group
+MASS 803 SKSCN  32.06000     ! sulphur, SH, -S-
+
+RESI KSB       0.000 ! param penalty= 446.000 ; charge penalty= 306.655
+GROUP            ! CHARGE   CH_PENALTY
+ATOM N3C    NKSCN  -0.465225514139282
+ATOM C3N    CKSCN  -0.358470187785333          
+ATOM S      SKSCN  -0.091554176719773          
+ATOM K      POT     0.915249878743355         
+               ! Bond order
+BOND C3N  N3C  ! 3
+BOND C3N  S    ! 1.5
+BOND C3N  K    ! 1
+ANGL S C3N N3C
+ANGL C3N N3C K
+PATCHING FIRS NONE LAST NONE 
+
+RESI POT       1.00 ! Potassium Ion
+GROUP
+ATOM K  POT  1.00
+PATCHING FIRST NONE LAST NONE
+
+RESI SCN       -1.000 ! param penalty= 446.000 ; charge penalty= 306.655
+GROUP            ! CHARGE   CH_PENALTY
+ATOM N3C    NKSCN  -0.457889123831512 
+ATOM C3N    CKSCN  -0.365216122129949          
+ATOM S      SKSCN  -0.17689475402769                                
+               ! Bond order
+BOND C3N  N3C  ! 3
+BOND C3N  S    ! 1.5
+ANGL S C3N N3C
+PATCHING FIRS NONE LAST NONE 
+
+end
+
+read para card flex append
+* additional parameters for KSCN bond and unbond
+*
+
+ATOMS
+MASS 800  POT   39.102000    ! k Potassium Ion! check masses
+MASS 801 CKSCN  12.01100     ! C for cyano group
+MASS 802 NKSCN  14.00700     ! N for cyano group
+MASS 803 SKSCN  32.06000     ! sulphur, SH, -S-
+
+BONDS
+CKSCN  NKSCN   1053.00     1.1800 ! ACN, acetonitrile; 3CYP, 3-Cyanopyridine (PYRIDINE pyr-CN) (MP2 by kevo)
+CKSCN  SKSCN   400.000     1.6700 ! Molecu , from CG1N1 CG331, PENALTY= 446
+CKSCN  POT     516.232     2.6800 ! potassium Ion
+
+ANGLES
+SKSCN  CKSCN  NKSCN    21.20    169.95 ! Molecu , from CG331 CG1N1 NG1T1, PENALTY= 113.9
+POT    CKSCN  SKSCN     0.00     79.94 ! Molecu , from CG321 SG311 HGP3, PENALTY= 47
+POT    NKSCN  CKSCN     0.00     79.94 ! Molecu , from CG321 SG311 HGP3, PENALTY= 47
+POT    CKSCN  NKSCN    38.80     79.94
+
+DIHEDRALS
+
+NONBONDED nbxmod  5 atom cdiel shift vatom vdistance vswitch -
+cutnb 14.0 ctofnb 12.0 ctonnb 10.0 eps 1.0 e14fac 1.0 wmin 1.5
+SKSCN    0.0       -0.4500     2.0000 ! methanethiol/ethylmethylsulfide pure solvent
+NKSCN    0.0       -0.1800     1.7900 ! ACN, acetonitrile; 3CYP, 3-cyanopyridine, kevo
+CKSCN    0.0       -0.1800     1.8700 ! ACN, acetonitrile; 3CYP, 3-cyanopyridine, kevo
+POT      0.0       -0.0870    1.76375   ! Potassium
+                   ! D. Beglovd and B. Roux, dA=-82.36+2.8 = -79.56 kc
+
+end
+
+return

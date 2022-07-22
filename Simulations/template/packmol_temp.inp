@@ -1,0 +1,21 @@
+tolerance 2.0
+seed RRR
+output init.pdb               
+filetype pdb
+structure SSS/scn.pdb
+  number AAA
+  inside box -14. -14. -14. 14. 14. 14.
+end structure
+structure SSS/k.pdb
+  number AAA
+  inside box -15. -15. -15. 15. 15. 15.
+end structure
+structure SSS/acem.pdb      
+  number BBB
+  inside box -15. -15. -15. 15. 15. 15. 
+end structure
+structure SSS/tip3.pdb      
+  number CCC
+  inside box -15. -15. -15. 15. 15. 15. 
+end structure
+

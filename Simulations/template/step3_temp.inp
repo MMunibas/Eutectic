@@ -1,0 +1,117 @@
+bomlev -1
+prnlev 5
+wrnlev 1
+
+set dcd DDD
+
+! Read topology and parameter files
+stream toppar.str
+
+! Read PSF
+open read unit 10 card name step1_pdbreader.psf
+read psf  unit 10 card xplor
+
+! Read Coordinate
+open read unit 10 card name step1_pdbreader.crd
+read coor unit 10 card
+
+! Read MTPL
+OPEN UNIT 40 CARD READ NAME ion_scn.lpun
+MTPL MTPUNIT 40
+CLOSE UNIT 40
+
+!Morse Parameter
+set c 0
+calc i @c+IND
+label loop
+  set in @i
+  calc ic @i+1
+  calc is @i+2
+  xtbd repl mors 373.811 1.21706 1.61348 sele bynu @in .or. bynu @ic end ! for CN bond
+  xtbd repl mors 124.36  1.66867 1.69773 sele bynu @ic .or. bynu @is end ! for SC bond
+  increase i by 3
+  increase c by 1
+if c lt NMX goto loop
+
+! PBC
+coor stat sele all end
+
+calc xdim = int ( ( ?xmax - ?xmin + 0.0 ) ) + 1
+calc ydim = int ( ( ?ymax - ?ymin + 0.0 ) ) + 1
+calc zdim = int ( ( ?zmax - ?zmin + 0.0 ) ) + 1
+
+set bsiz = 0
+if @xdim .gt. @bsiz then
+   set bsiz = @xdim
+endif
+
+if @ydim .gt. @bsiz then
+   set bsiz = @ydim
+endif
+
+if @zdim .gt. @bsiz then
+   set bsiz = @zdim
+endif
+
+open read unit 10 card name crystal_image.str
+calc boxx = 30.
+crystal defi cubic @boxx @boxx @boxx 90. 90. 90.
+crystal build nope 0
+image byres xcen 0.0 ycen 0.0 zcen 0.0 sele all end
+
+! Electrostatics
+nbonds atom ewald pmewald kappa 0.43 -
+fftx 32 ffty 32 fftz 32 order 4 -
+cutnb 14.0  ctofnb 12.0 ctonnb 10.0 -
+lrc vdw vswitch -
+inbfrq -1 imgfrq -1
+
+
+! Perform task
+open read unit 33 file name @dcd
+
+traj query unit 33
+traj iread 33 nunit 1
+
+set i 1
+set s SKP
+
+label trajloop
+
+traj read
+
+if s eq SKP then
+
+if i ge STR then
+
+    cons fix sele .not. (BYS) end
+    
+    mini abnr nstep ONS nprint ONP tolgrd 1e-8
+    
+    !cons fix sele .not. (BYS) end
+    
+    vibran nmode VNM
+    
+    redu fix finit
+    
+    print norm
+    
+    end
+    
+endif
+
+set s 0
+
+endif
+
+incr i by 1
+incr s by 1
+
+if i le LST goto trajloop
+
+close unit 33
+
+stop
+
+
+
